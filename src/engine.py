@@ -19,23 +19,12 @@ def make_world(level):
     map = World(81, 81, level)
     return map
 
-def make_player(world):
+def make_player(world, x_resolution, y_resolution):
     print("Init Player")
-
-    '''
-    position = Coord(8, 6)
-    player = Player(position)
+    position = world.tilemap.getEntrance()
+    player = Player(position, x_resolution, y_resolution)
     print("Position: %s" % position)
     return player
-    '''
-    while True:
-        x = random.randint(0, world.width)
-        y = random.randint(0, world.height)
-        if world.get_tile(x, y) == OPEN:
-            position = Coord(4, 4)
-            player = Player(position)
-            print("Position: %s" % position)
-            return player
 
 class Engine():
     def __init__(self):
@@ -47,13 +36,18 @@ class Engine():
         self._green = None
         self._brown = None
         self._grey = None
+        self._error = None
+        self.x_resolution = 1024
+        self.y_resolution = 768
+        #self.x_resolution = 1400
+        #self.y_resolution = 1050
         self._player_sprite = None
 
     def init(self):
 
         # init Screen
         pygame.init()
-        self._screen = pygame.display.set_mode((1024, 768), pygame.HWSURFACE)
+        self._screen = pygame.display.set_mode((self.x_resolution, self.y_resolution), pygame.HWSURFACE)
         pygame.display.set_caption('Pocket Quest')
 
         # init settings
@@ -69,11 +63,12 @@ class Engine():
         self._green, rect = utils.load_png("green.png")
         self._brown, rect = utils.load_png("brown.png")
         self._grey, rect = utils.load_png("grey.png")
+        self._error, rect = utils.load_png("tree.png")
         # self._player_sprite, rect = utils.load_png('tree.png')
 
         # init world
         self.world = make_world(1)
-        self._player = make_player(self.world)
+        self._player = make_player(self.world, self.x_resolution, self.y_resolution)
         self.runner = Coordinator(self.world, self._player)
 
         # make sprite groups
@@ -105,14 +100,19 @@ class Engine():
 
     def on_render(self):
 
-        screen_width = 16
-        screen_height = 12
+
+        # 16x12 @ 1024x768
+        screen_width = self.x_resolution / 64
+        screen_height = self.y_resolution / 64
+
+        x_buffer = screen_width / 2
+        y_buffer = screen_height / 2
 
         map_width = self.world.width
         map_height = self.world.height
 
-        y_start = self._player.position.y - 6
-        y_end = self._player.position.y + 6
+        y_start = self._player.position.y - y_buffer
+        y_end = self._player.position.y + y_buffer
 
         #print("x: %s -> %s (%s)" % (x_start, x_end, x_end - x_start))
         #print("y: %s -> %s (%s)" % (y_start, y_end, y_end - y_start))
@@ -125,8 +125,8 @@ class Engine():
         if (y_end > map_height):
             y_end = map_height
         for row in self.world.get_world()[y_start:y_end]:
-            x_start = self._player.position.x - 8
-            x_end = self._player.position.x + 8
+            x_start = self._player.position.x - x_buffer
+            x_end = self._player.position.x + x_buffer
             screen_x = 0
             if (x_start < 0):
                 screen_x = 64 * abs(x_start)
@@ -134,6 +134,7 @@ class Engine():
             if (x_end > map_width):
                 x_end = map_width
             #print("tiles: %s" % len(row[x_start:x_end]))
+            image =self._error
             for tile in row[x_start:x_end]:
                 if tile.terrain == OPEN:
                     image = self._green

@@ -28,3 +28,4 @@ class Coordinator():
                 self.player.position.y = new_y
             else:
                 print("Blocked By Boundary")
+            print("X: %s Y: %s" % (self.player.position.x, self.player.position.y))

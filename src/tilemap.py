@@ -1,4 +1,5 @@
 import random
+from src.coord import Coord
 
 UNLOCKED = -1
 OPEN = 0
@@ -12,10 +13,10 @@ class TileMap():
         self.roomSize = 9
         self.roomsPerSide = 9 * level;
         self.level = level
-        numTiles = self.roomsPerSide * self.roomSize;
+        numTiles = self.roomsPerSide * self.roomSize
 
-        self.xTiles = numTiles;
-        self.yTiles = numTiles;
+        self.xTiles = numTiles
+        self.yTiles = numTiles
 
         print("Starting constructor")
         print("yTiles: %s" % self.yTiles)
@@ -23,28 +24,39 @@ class TileMap():
 
         self.tilegrid = [[None for x in range(self.xTiles)] for y in range(self.yTiles)]
         self.roomgrid = [[None for x in range(self.roomsPerSide)] for y in range(self.roomsPerSide)]
-        self.createRooms()
-
+        self.generateRooms()
+        entranceQuadrant = random.randint(1, 4)
+        self.entrance = self.generateObject(entranceQuadrant)
+        exitQuadrant = random.randint(1, 4)
+        while exitQuadrant == entranceQuadrant:
+            exitQuadrant = random.randint(1, 4)
+        self.exit = self.generateObject(exitQuadrant)
+        self.textDraw()
 
     def getHeight(self):
         return self.xTiles;
 
-
     def getWidth(self):
         return self.xTiles;
 
+    def getEntrance(self):
+        return self.entrance
 
     def getRoomsPerX(self) :
         return self.roomsPerSide
 
-
     def getRoomsPerY(self):
         return self.roomsPerSide
 
+    def isBlocked(self, x, y):
+        if self.getTile(x, y) == WALL:
+            return True
+        else:
+            return False
 
-    def createRooms(self):
+    def generateRooms(self):
 
-        print("------> Creating Level")
+        #print("------> Creating Level")
 
         for y in range(self.roomsPerSide):
             for x in range(self.roomsPerSide):
@@ -60,7 +72,33 @@ class TileMap():
                 self.drawOnGrid(xLevel, yLevel, room)
                 self.roomgrid[x][y] = room
 
-        print("<------ Finished Level Creation")
+        #print("<------ Finished Level Creation")
+
+    def generateObject(self, quadrant):
+
+        x_split = self.getWidth() / 2
+        y_split = self.getHeight() / 2
+        # 1  2
+        # 3  4
+        if quadrant == 1:
+            x_start = 0
+            y_start = 0
+        if quadrant == 2:
+            x_start = x_split
+            y_start = 0
+        if quadrant == 3:
+            x_start = 0
+            y_start = y_split
+        if quadrant == 4:
+            x_start = x_split
+            y_start = y_split
+
+        while True:
+            x = random.randint(x_start, x_start + x_split)
+            y = random.randint(y_start, y_start + y_split)
+            if not self.isBlocked(x, y):
+                location = Coord(x, y)
+                return location
 
     def drawOnGrid(self, xOffset, yOffset, room):
 
@@ -75,7 +113,7 @@ class TileMap():
 
     def getTile(self, x, y):
 
-        print("Tile @: %s, %s" % (x, y))
+        #print("Tile @: %s, %s" % (x, y))
 
         if (0 > x or x > self.xTiles or 0 > y or y > self.yTiles):
             return 0
@@ -128,7 +166,7 @@ class Room():
 
     def create(self):
 
-        print("Creating Room @ %s, %s" % (self.xPos, self.yPos))
+        #print("Creating Room @ %s, %s" % (self.xPos, self.yPos))
 
         leftNeighbor = self.map.getRoom(self.xPos - 1, self.yPos)
         topNeighbor = self.map.getRoom(self.xPos, self.yPos - 1)
@@ -160,10 +198,10 @@ class Room():
             if not (leftConnection and topConnection):
                 bottomConnection = True
 
-        print("LeftConnect: %s" % leftConnection)
-        print("RightConnect: %s" % rightConnection)
-        print("TopConnect: %s" % topConnection)
-        print("BottomConnect: %s" % bottomConnection)
+        #print("LeftConnect: %s" % leftConnection)
+        #print("RightConnect: %s" % rightConnection)
+        #print("TopConnect: %s" % topConnection)
+        #print("BottomConnect: %s" % bottomConnection)
 
         for y in range(self.squaresPerSide):
             for x in range(self.squaresPerSide):
@@ -242,11 +280,11 @@ class Room():
         return self.tiles[x][y] == OPEN;
 
     def open(self, x, y):
-        print("Open @ %s, %s" % (x, y))
+        #print("Open @ %s, %s" % (x, y))
         self.fillSquare(OPEN, x, y);
 
     def wall(self, x, y):
-        print("Wall @ %s, %s" % (x, y))
+        #print("Wall @ %s, %s" % (x, y))
         self.fillSquare(WALL, x, y)
 
     def fillSquare(self, value, x, y):

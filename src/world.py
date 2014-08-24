@@ -10,6 +10,8 @@ class World():
         self.height = height
         self.level = level
         self.generate()
+        self.entrance = None
+        self.exit = None
 
     def generate(self):
 
