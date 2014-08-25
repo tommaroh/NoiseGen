@@ -1,5 +1,5 @@
 
-from src.tilemap import OPEN, WALL
+from src.map import OPEN, WALL
 class Coordinator():
 
     def __init__(self, map, player):
@@ -13,8 +13,10 @@ class Coordinator():
         new_x = old_x + x
         new_y = old_y + y
 
-        tile = self.map.get_tile(new_x, new_y)
-        if tile == WALL:
+        tile = self.map.getTile(new_x, new_y)
+        if tile.isBlocked():
+            print("Tile: %s, %s" % (tile.x, tile.y))
+            print("Blocked by Tile @ %s, %s" % (new_x, new_y))
             return
         else:
             if (0 <= new_x) and (new_x < self.map.width):
@@ -28,4 +30,4 @@ class Coordinator():
                 self.player.position.y = new_y
             else:
                 print("Blocked By Boundary")
-            print("X: %s Y: %s" % (self.player.position.x, self.player.position.y))
+            print("Player @ %s, %s" % (self.player.position.x, self.player.position.y))
