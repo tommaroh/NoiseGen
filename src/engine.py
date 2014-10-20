@@ -39,6 +39,7 @@ class Engine():
         # init Screen
         pygame.init()
         self._screen = pygame.display.set_mode((self.x_resolution, self.y_resolution), pygame.HWSURFACE)
+        #self._screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN | pygame.HWSURFACE)
         pygame.display.set_caption('Pocket Quest')
 
         # init settings
@@ -72,7 +73,6 @@ class Engine():
         if event.type == locals.QUIT:
             self._running = False
         elif event.type == locals.KEYDOWN:
-            # print("Keydown")
             if event.key == locals.K_RIGHT:
                 self.runner.move_player(1, 0)
                 # self._player.move_right()
