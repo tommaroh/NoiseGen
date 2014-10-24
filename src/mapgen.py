@@ -13,8 +13,6 @@ width = 800
 x_resolution = 800
 y_resolution = 600
 
-sys.setrecursionlimit(10000)
-
 class Tile():
 
     def __init__(self, x, y, value):
@@ -66,7 +64,6 @@ def get_terrain_map():
     for y in range(height):
         row = []
         for x in range(width):
-            #noise_value = snoise2(x / freq, y / freq, octaves, persistence, lacunarity)
             noise_value = snoise2(x / freq, y / freq, octaves, persistence, lacunarity, base=z)
             row.append(noise_value)
             if noise_value > max:
@@ -113,8 +110,8 @@ def get_base_map():
             if noise_value < min:
                 min = noise_value
         map.append(row)
-    print("Max: %s" % max)
-    print("Min: %s" % min)
+    #print("Max: %s" % max)
+    #print("Min: %s" % min)
     return map
 
 def build_map():
@@ -142,21 +139,20 @@ def build_map():
     '''
 
     #normalize
-    max = 0
-    min = 0
+    max_val = 0
+    min_val = 0
     for tile in map.get_tiles():
-        if tile.value > max:
-            max = tile.value
-        if tile.value < min:
-            min = tile.value
-    pos_factor = 1 / max
-    neg_factor = 1 / abs(min)
+        if tile.value > max_val:
+            max_val = tile.value
+        if tile.value < min_val:
+            min_val = tile.value
+    pos_factor = 1 / max_val
+    neg_factor = 1 / abs(min_val)
     for tile in map.get_tiles():
-        if tile >= 0:
-            tile.value *= pos_factor
+        if tile.value >= 0:
+            tile.value = min(1, pos_factor * tile.value)
         else:
-            tile.value *= neg_factor
-
+            tile.value = max(-1, neg_factor * tile.value)
 
     rainfall(map)
     return map
@@ -184,34 +180,35 @@ def runoff(map, x, y, count, momentum=None):
     count += 1
     if count == (sys.getrecursionlimit() - 10):
         return count
-    #amount to scale each tile by
     #print("Runoff: %s" % count)
     tile = map.get(x, y)
-    neighbor = find_lowest_neighbor(map, x, y, momentum)
-    if not neighbor:
-        #print("No low neighbor")
+    neighbors = find_lowest_neighbor(map, x, y, momentum)
+    if not neighbors:
+        #print("No low neighbors")
         return count
-    difference = tile.value - neighbor.value
-    amount = difference / 2
-    tile.value -= amount
-    tile.water += 1
-    if neighbor.value <= 0:
-        #print("Runoff To Water")
-        neighbor.value += amount
-        return count
-    momentum = ""
-    if neighbor.x > tile.x:
-        momentum += "North"
-    if neighbor.x < tile.x:
-        momentum += "South"
-    if neighbor.y > tile.y:
-        momentum += "East"
-    if neighbor.y < tile.y:
-        momentum += "West"
-    #print("Tile: %s" % tile)
-    #print("Neighbor: %s" % neighbor)
-    #print("Momentum: %s" % momentum)
-    return runoff(map, neighbor.x, neighbor.y, count, momentum)
+    for neighbor in neighbors:
+        difference = tile.value - neighbor.value
+        amount = difference / 2
+        tile.value -= amount
+        tile.water += 1
+        if neighbor.value <= 0:
+            #print("Runoff To Water")
+            neighbor.value += amount
+            return count
+        momentum = ""
+        if neighbor.y > tile.y:
+            momentum += "North"
+        if neighbor.y < tile.y:
+            momentum += "South"
+        if neighbor.x > tile.x:
+            momentum += "East"
+        if neighbor.x < tile.x:
+            momentum += "West"
+        if count > 9000:
+            print("Tile: %s" % tile)
+            print("Neighbor: %s" % neighbor)
+            print("Momentum: %s" % momentum)
+        return runoff(map, neighbor.x, neighbor.y, count, momentum)
 
 def find_lowest_neighbor(map, x, y, momentum=None):
 
@@ -235,7 +232,8 @@ def find_lowest_neighbor(map, x, y, momentum=None):
                 if neighbor.value <= tile.value:
                     candidates.append(neighbor)
     if candidates:
-        return random.choice(candidates)
+        return candidates
+        #return random.choice(candidates)
     else:
         return None
 
