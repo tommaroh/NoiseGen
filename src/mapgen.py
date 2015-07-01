@@ -263,18 +263,6 @@ def draw(screen, map):
             #    red = water * water_scale
             #    color = (red, 0, 0)
             else:
-                '''
-                #plains
-                if value <= 0.25:
-                    color = (0, 255, 0)
-                # 'normal' tile
-                elif value <= 0.50:
-                    color = (255, 255, 0)
-                elif value <= 0.75:
-                    color = (0, 255, 255)
-                else:
-                    color = (255, 0, 0)
-                '''
                 red = water * water_scale
                 green = value * 255
                 color = (red, green, 0)
@@ -292,18 +280,3 @@ def draw(screen, map):
 
 if __name__ == "__main__":
     run()
-
-
-'''
-
-if tile <= 100:
-    red = base / 2
-    green = base / 2
-else tile <= 200:
-    red = 50 - ((base - 100) / 2)
-    green = 50 + ((base - 100) * 2)
-else:
-    red = 0
-    green = 255 - base
-
-'''

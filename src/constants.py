@@ -1,3 +1,0 @@
-UNLOCKED = -1
-OPEN = 0
-WALL = 1
