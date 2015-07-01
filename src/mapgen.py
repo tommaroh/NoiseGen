@@ -7,9 +7,6 @@ import sys
 height = 600
 width = 800
 
-#height = 5000
-#width = 5000
-
 x_resolution = 800
 y_resolution = 600
 
@@ -85,15 +82,6 @@ def get_base_map():
     # lacunarity: more detail, more spiny
     lacunarity = float(1)
     freq = 100.0 * octaves
-    '''
-    # octaves: fewer, more dominant features
-    octaves = 6
-    # persistence: more broken up
-    persistence = float(0.5)
-    # lacunarity: more detail, more spiny
-    lacunarity = float(2.5)
-    freq = 100.0 * octaves
-    '''
 
     max = 0
     min = 10
@@ -110,8 +98,6 @@ def get_base_map():
             if noise_value < min:
                 min = noise_value
         map.append(row)
-    #print("Max: %s" % max)
-    #print("Min: %s" % min)
     return map
 
 def build_map():
@@ -127,16 +113,6 @@ def build_map():
             row.append(tile)
         map.append(row)
     map = Map(map)
-    '''
-    #scale it up a bit
-    max = 0
-    for tile in map.get_tiles():
-        if tile.value > max:
-            max = tile.value
-    adj = (1 - max) / 3
-    for tile in map.get_tiles():
-        tile.value += adj
-    '''
 
     #normalize
     max_val = 0
