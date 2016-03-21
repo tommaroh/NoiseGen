@@ -12,6 +12,10 @@ y_resolution = 600
 
 class Tile():
 
+    '''
+    Represents an individual square in the world.
+    '''
+
     def __init__(self, x, y, value):
         self.x = x
         self.y = y
@@ -24,6 +28,9 @@ class Tile():
 
 class Map():
 
+    '''
+    Class to hold a 2 dimensional list of tiles, representing the map.
+    '''
     def __init__(self, tiles):
         self.tiles = tiles
         self.width = len(tiles[0])
@@ -38,53 +45,20 @@ class Map():
         return self.tiles[y][x]
 
     def get_tiles(self):
-        # Python 3: def __next__(self)
         for y in range(self.height):
             for x in range(self.width):
                 yield self.tiles[y][x]
 
-def get_terrain_map():
+def get_noise_map(octaves, persistence, lacunarity):
+    '''
+    This builds a Map object generated using the given noise parameters.
+    octaves (int): higher number gives fewer, more dominant features
+    persistence (float): higher number makes the features more broken up
+    lacunarity (float): higher number generates more detail and makes the map more spiney 
+    '''
 
-    # higher: fewer, more dominant features
-    octaves = 5
-    # persistence: higher:, more broken up
-    persistence = float(0.5)
-    # higher: more detail, more spiny
-    lacunarity = float(3.0)
     freq = 100.0 * octaves
 
-    max = 0
-    min = 10
-    z = random.randint(0, 10000)
-    print("Terrain Seed: %s" % z)
-    map = []
-    for y in range(height):
-        row = []
-        for x in range(width):
-            noise_value = snoise2(x / freq, y / freq, octaves, persistence, lacunarity, base=z)
-            row.append(noise_value)
-            if noise_value > max:
-                max = noise_value
-            if noise_value < min:
-                min = noise_value
-        map.append(row)
-    #print("Max: %s" % max)
-    #print("Min: %s" % min)
-    return map
-
-def get_base_map():
-
-
-    # octaves: fewer, more dominant features
-    octaves = 5
-    # persistence: more broken up
-    persistence = float(1.5)
-    # lacunarity: more detail, more spiny
-    lacunarity = float(1)
-    freq = 100.0 * octaves
-
-    max = 0
-    min = 10
     z = random.randint(0, 10000)
     print("Base Seed: %s" % z)
     map = []
@@ -93,48 +67,54 @@ def get_base_map():
         for x in range(width):
             noise_value = snoise2(x / freq, y / freq, octaves, persistence, lacunarity, base=z)
             row.append(noise_value)
-            if noise_value > max:
-                max = noise_value
-            if noise_value < min:
-                min = noise_value
         map.append(row)
     return map
 
 def build_map():
-    base = get_base_map()
-    terrain = get_terrain_map()
+
+    # get a "base" map with big features and very little detail.
+    base = get_noise_map(5, 1.5, 1)
+    # get a noisier map with few big features but a lot of little detail.
+    terrain = get_terrain_map(5, 0.5, 3.0)
     map = []
+    # scale the high detail map down and overlay it on top of the base map.
     for y in range(height):
         row = []
         for x in range(width):
             new_val = base[y][x] * 0.5 + terrain[y][x] * 0.5
-            #new_val = base[y][x]
             tile = Tile(x, y, new_val)
             row.append(tile)
         map.append(row)
-    map = Map(map)
+    return Map(map)
 
-    #normalize
+def normalize_map(map):
+
+    #normalize the map values
     max_val = 0
     min_val = 0
+    # figure out the current max and min height values of the map
     for tile in map.get_tiles():
         if tile.value > max_val:
             max_val = tile.value
         if tile.value < min_val:
             min_val = tile.value
+    
     pos_factor = 1 / max_val
     neg_factor = 1 / abs(min_val)
+    #scale the map such that the highest value is at 1 and the lowest value is at -1
     for tile in map.get_tiles():
         if tile.value >= 0:
             tile.value = min(1, pos_factor * tile.value)
         else:
             tile.value = max(-1, neg_factor * tile.value)
 
-    rainfall(map)
+    # rainfall function still needs some work.
+    #rainfall(map)
     return map
 
 def rainfall(map):
 
+    # let it rain
     longest = 0
     iterations = 10000
     rivers = []
@@ -187,6 +167,9 @@ def runoff(map, x, y, count, momentum=None):
         return runoff(map, neighbor.x, neighbor.y, count, momentum)
 
 def find_lowest_neighbor(map, x, y, momentum=None):
+    '''
+    Given some x,y coordinate, find it's neighbor with the lowest height.
+    '''
 
     tile = map.get(x, y)
     candidates = []
@@ -209,22 +192,8 @@ def find_lowest_neighbor(map, x, y, momentum=None):
                     candidates.append(neighbor)
     if candidates:
         return candidates
-        #return random.choice(candidates)
     else:
         return None
-
-def run():
-
-    pygame.init()
-    screen = pygame.display.set_mode((x_resolution, y_resolution), pygame.HWSURFACE)
-    background = pygame.Surface(screen.get_size())
-    background = background.convert()
-    background.fill((0, 0, 0))
-    pygame.display.flip()
-    for i in range(3):
-        print("--------------")
-        map = build_map()
-        draw(screen, map)
 
 def draw(screen, map):
 
@@ -253,23 +222,20 @@ def draw(screen, map):
             green = 0
 
             value = map.get(x, y).value
-            water = map.get(x, y).water
+            #water = map.get(x, y).water
             if value <= 0:
                 # underwater, color blue
                 blue = 255 - (abs(value) * 255)
                 color = (0, 0, blue)
-            #elif water > (max_water / 4):
-            #    #water on tile (lake, river)
-            #    red = water * water_scale
-            #    color = (red, 0, 0)
             else:
-                red = water * water_scale
+                # land, color green
+                #red = water * water_scale
                 green = value * 255
-                color = (red, green, 0)
+                color = (0, green, 0)
             try:
                 screen.fill(color, rect=(x, y, 1, 1))
             except:
-                print("Bad: %s" % str(color))
+                print("Bad Tile: %s,%s - %s" % (x_index, y_index, (str(color))))
             x_index += x_jump
             x += 1
         y_index += y_jump
@@ -277,6 +243,20 @@ def draw(screen, map):
 
     pygame.display.flip()
     time.sleep(5)
+
+def run():
+
+    pygame.init()
+    screen = pygame.display.set_mode((x_resolution, y_resolution), pygame.HWSURFACE)
+    background = pygame.Surface(screen.get_size())
+    background = background.convert()
+    background.fill((0, 0, 0))
+    pygame.display.flip()
+    for i in range(3):
+        print("--------------")
+        map = build_map()
+        map = normalize_map(map)
+        draw(screen, map)
 
 if __name__ == "__main__":
     run()
